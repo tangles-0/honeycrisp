@@ -1,6 +1,6 @@
 # The HoneyCrisp Emulator
 
-![The HoneyCrisp Emulator Logo](https://landonjsmith.com/hclogo.png)
+![The HoneyCrisp Emulator Logo](https://landonjsmith.com/hclogo.png =200x100)
 
 **The HoneyCrisp Emulator** is an extensive **APPLE-1 emulator** programmed entirely in pure JavaScript and HTML.
 
