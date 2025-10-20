@@ -1,5 +1,7 @@
 # The HoneyCrisp Emulator
 
+![The HoneyCrisp Emulator Logo](https://landonjsmith.com/hclogo.png)
+
 **The HoneyCrisp Emulator** is an extensive **APPLE-1 emulator** programmed entirely in pure JavaScript and HTML.
 
 As a personal project that I started in **June 2025**, I wanted to see how accurately I could emulate the first Apple Computer purely from documentation created by others who have used replicas or original hardware.
