@@ -15,10 +15,10 @@ HoneyCrisp v1.0 was released on my personal website at [landonjsmith.com](https:
 **VERSION 1.1 of The HoneyCrisp Emulator is now available. Check the releases page!**
 Feel free to poke around in the source code! 🙂
 
-DECEMBER 1ST, 2025: 
 **VERSION 1.2 of The HoneyCrisp Emulator is now available. Check the releases page!**
 Feel free to poke around in the source code! 🙂
 
-DECEMBER 1ST, 2025: 
 **VERSION 1.2.1 of The HoneyCrisp Emulator is now available. This version is a HOTFIX release for v1.2.**
+
+**VERSION 1.2.2 of The HoneyCrisp Emulator is now available. This version is a BUG FIX release for v1.2.**
 If you're downloading a source-code release, I highly recommend you download this version for the latest stability and features.
