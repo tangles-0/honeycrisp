@@ -1,0 +1,2655 @@
+<!--
+
+
+HONEYCRISP EMULATOR v1.2.2 (120225_331)
+
+Copyright (c) 2025 Landon James Smith
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>HoneyCrisp Emulator</title>
+  <style>
+:root {
+  --term-fg: #FFFFFF;
+  --term-bg: #000000;
+}
+#terminal {
+  font-family: 'AppleI', monospace;
+  font-size: 16px;
+  line-height: 1em;
+  white-space: pre;
+  letter-spacing: 0;
+  word-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--term-fg);
+  background-color: var(--term-bg);
+  width: calc(40ch);
+  height: calc(24em);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+  border: 1px solid #333;
+  transition: color 0.8s ease, background-color 0.8s ease, box-shadow 0.8s ease;
+  position: relative;
+  transform: scale(0.90); 
+  transform-origin: center;
+}
+
+#terminal.scanlines::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+
+
+@font-face {
+  font-family: "AppleI";
+  src: url("https://landonjsmith.com/hc.ttf") format("truetype");
+  font-display: swap;
+}
+#terminal:fullscreen {
+  width: 90vw;
+  height: 90vh;
+  font-size: 2.5vmin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
+#terminal:-webkit-full-screen {
+  width: 90vw;
+  height: 90vh;
+  font-size: 2.5vmin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
+#terminal:-moz-full-screen {
+  width: 90vw;
+  height: 90vh;
+  font-size: 2.5vmin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+#terminal:focus {
+  outline: none;
+}
+/* Program Library Modal, Save Modal */
+#libraryModal, #loadedModal, #saveModal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+#libraryContent, #loadedContent {
+  background-color: #000;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid var(--term-fg);
+  width: 90%;
+  max-width: 600px;
+  color: var(--term-fg);
+  font-family: monospace;
+}
+
+#libraryContent h2 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: normal;
+  border-bottom: 1px solid var(--term-fg);
+  padding-bottom: 10px;
+}
+#programSearch {
+ width: 80%;
+  padding: 8px;
+  margin-bottom: 15px;
+  background-color: #000;
+  color: var(--term-fg);
+  border: 1px solid var(--term-fg);
+  font-family: monospace;
+  font-size: 14px;
+}
+
+#programSearch:focus {
+  outline: none;
+  border-color: var(--term-fg);
+  box-shadow: 0 0 5px var(--term-fg);
+}
+
+.search-stats {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+#loadedContent h2 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: normal;
+  border-bottom: 1px solid var(--term-fg);
+  padding-bottom: 10px;
+}
+
+#loadedMessage {
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.library-close {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.library-close:hover {
+  opacity: 0.7;
+}
+
+.program-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.program-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+}
+
+.program-item:hover {
+  background-color: #111;
+}
+
+.program-item h3 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.program-item p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.program-type {
+  display: inline-block;
+  margin-right: 10px;
+  font-size: 11px;
+}
+
+.loading-message, .error-message {
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+}
+.shortcuts-toggle {
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--term-fg);
+  text-decoration: underline;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.shortcuts-toggle:hover {
+  opacity: 0.7;
+}
+
+.shortcuts-content {
+  display: none;
+  margin-top: 10px;
+}
+
+.shortcuts-content.show {
+  display: block;
+}
+.shortcuts-box {
+  display: inline-block;
+  text-align: center;
+  font-family: monospace;
+  font-size: 11px;
+  background: #1a1a1a;
+  padding: 1px 15px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  min-width: 280px;
+  color: #ffffff;
+}
+
+.shortcuts-box div {
+  margin: 5px 0;
+}
+
+.shortcut-key {
+  color: var(--term-fg);
+  font-weight: bold;
+  min-width: 60px;
+  display: inline-block;
+}
+  </style>
+</head>
+<body>
+<center>
+  <header>
+<img src="https://landonjsmith.com/hclogo.png" alt="HONEYCRISP EMULATOR" width="200" height="300">
+</header>
+<!--Sets up the emulated hardware controls...These buttons (clearly) map to specific functions.-->
+<div class="nav">
+<!--version number/copyright notice. At top of file as well. Build Number is now at the top of the file.-->
+      HoneyCrisp v1.2.2 | © 2025 Landon J. Smith 
+      <br>
+      | <a href="https://landonjsmith.com/">Home</a> | 
+      <a href="https://soundcloud.com/therealsjl">My Music</a> | 
+      <a href="https://youtube.com/@landonjsmith">My Videos</a> | 
+</div>
+  <br>
+  <div class="controls">
+  <div class="mem-options">
+    <label>Select a memory amount:</label>
+    <input type="radio" name="memsize" value="4" checked id="mem4"> <label for="mem4">4KB</label>
+    <input type="radio" name="memsize" value="8" id="mem8"> <label for="mem8">8KB</label>
+    <input type="radio" name="memsize" value="16" id="mem16"> <label for="mem16">16KB</label>
+    <input type="radio" name="memsize" value="32" id="mem32"> <label for="mem32">32KB</label>
+    <input type="radio" name="memsize" value="48" id="mem48"> <label for="mem48">48KB</label>
+    <br>
+    <label style="margin-left: 20px;">CPU Speed:</label>
+    <input type="radio" name="speed" value="1" checked id="speed1"> <label for="speed1">Normal</label>
+    <input type="radio" name="speed" value="2" id="speed10"> <label for="speed10">Turbo</label>
+  </div>
+<!--New terminal display themes.-->
+<label>Terminal Theme:</label>
+<select id="themeSelect">
+  <option value="green">Mint</option>
+  <option value="amber">Sherbert</option>
+  <option value="white">Vanilla</option>
+  <option value="purple">Grape</option>
+  <option value="yellow">Lemon</option>
+  <option value="cyan">Blueberry</option>
+  <option value="red">Cherry</option>
+</select>
+  </div>
+  <br>
+  <div class="controls">
+    <button class="btn-warning" id="btnReset">HARD RESET</button>
+    <button class="btn-primary" id="btnWarmReset">SOFT RESET</button>
+    <button class="btn" id="btnClear">CLEAR SCREEN</button>
+    <button class="btn-danger" id="btnBreak">BREAK</button>
+    <button class="btn" id="btnFullscreen">FULLSCREEN</button>
+  </div>
+  <br>
+  <hr width="1000px">
+  <div class="controls">
+    <label>Load Program:</label>
+    <input type="file" id="programLoader" accept=".hc,.bas,.txt">
+    <button class="btn" id="btnLibrary">Program Library</button>
+    <button class="btn" id="btnSaveRAM">Save RAM Contents</button>
+  </div>
+  <br>
+  <br>
+<p style="font-size: 12px; margin-top: 20px;">
+  <strong>To start WOZMON:</strong> CLEAR SCREEN → SOFT RESET<br>
+  <strong>To run a program:</strong> Load a .hc file or select a program from the Program Library.<br>
+  <strong>For Integer BASIC:</strong> Load a .bas file or select a program from the Program Library.
+  <br> <hr width=30%>
+<strong>Keyboard Shortcuts:</strong><br>
+<div class="shortcuts-box">
+  <span class="shortcuts-toggle" id="shortcutsToggle">▶ Show Shortcuts</span>
+  <div class="shortcuts-content" id="shortcutsContent">
+    <div><span class="shortcut-key">Ctrl+H</span> → Hard Reset</div>
+    <div><span class="shortcut-key">Ctrl+S</span> → Soft Reset</div>
+    <div><span class="shortcut-key">Ctrl+W</span> → Clear Screen</div>
+    <div><span class="shortcut-key">Ctrl+C</span> → Break (Integer BASIC only)</div>
+    <div><span class="shortcut-key">Ctrl+F</span> → Full Screen Terminal</div>
+    <div><span class="shortcut-key">Ctrl+B</span> → Browse For Programs</div>
+  </div>
+</div>
+  <br><br>
+  <div class="status-bar">
+    <div id="ramstatus">RAM: 4KB</div>
+    <div>CPU PC=<span id="pc">0000</span> <span class="indicator" id="indicator"></span></div>
+    <div id="err" style="color: #f44;"></div>
+  </div>
+  
+<pre id="terminal" tabindex="0" aria-label="Apple-1 terminal"></pre>
+  
+<div id="libraryModal">
+  <div id="libraryContent">
+    <span class="library-close" id="closeLibrary">&times;</span>
+    <h2>HoneyCrisp Program Library</h2>
+    <input type="text" id="programSearch" placeholder="Search programs by name, description, or type...">
+    <div class="search-stats" id="searchStats"></div>
+    <div class="program-list" id="programList">
+      <div class="loading-message">Grabbing programs...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Program Loaded Modal -->
+<div id="loadedModal">
+  <div id="loadedContent">
+    <span class="library-close" id="closeLoaded">&times;</span>
+    <h2>The program was successfully loaded.</h2>
+    <div id="loadedMessage"></div>
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--term-fg);">
+      <label style="cursor: pointer; font-size: 12px;">
+        Don't show this message again: <input type="checkbox" id="dontShowAgain" style="margin-right: 8px;">
+      </label>
+    </div>
+  </div>
+</div>
+<div id="saveModal">
+  <div id="libraryContent">
+    <span class="library-close" id="closeSave">&times;</span>
+    <h2>Save session RAM to a file</h2>
+    <div style="padding: 20px; font-family: monospace;">
+      <p style="margin-bottom: 15px;">Choose the memory range to save:</p>
+      
+<label style="display: block; margin-bottom: 10px;">
+  <input type="radio" name="saveRange" value="modified" checked> 
+  Modified RAM Only
+</label>
+<label style="display: block; margin-bottom: 10px;">
+  <input type="radio" name="saveRange" value="full"> 
+  Full RAM (Current: <span id="ramSizeDisplay">4KB</span>)
+</label>
+<label style="display: block; margin-bottom: 10px;">
+  <input type="radio" name="saveRange" value="custom"> 
+  Custom Range
+</label>
+      
+      <div id="customRangeInputs" style="margin-left: 20px; margin-bottom: 20px; display: none;">
+        <label style="display: block; margin-bottom: 5px;">
+          Start Address (hex): <input type="text" id="startAddr" value="0000" maxlength="4" 
+                                      style="width: 60px; font-family: monospace; text-transform: uppercase;">
+        </label>
+        <label style="display: block;">
+          End Address (hex): <input type="text" id="endAddr" value="0FFF" maxlength="4"
+                                    style="width: 60px; font-family: monospace; text-transform: uppercase;">
+        </label>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 5px;">
+          Filename: <input type="text" id="saveFilename" value="program" 
+                          style="width: 200px; font-family: monospace;">
+        </label>
+        <small style="opacity: 0.7;">.hc extension will be added automatically</small>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="cursor: pointer;">
+          <input type="checkbox" id="skipZeros" checked> 
+          Skip empty memory (zeros only)
+        </label>
+      </div>
+      
+      <button class="btn-primary" id="confirmSave" style="padding: 10px 20px;">Save File</button>
+      <button class="btn" id="cancelSave" style="padding: 10px 20px; margin-left: 10px;">Cancel</button>
+    </div>
+  </div>
+</div>
+  </center>
+<hr>
+<div class="legal">
+<a href="https://landonjsmith.com/hcfaqs">Frequently Asked Questions</a> 
+<!--legal cover (maybe? lol) and thanks.-->
+<p>Questions? Comments? <a href="mailto:landon@producerjason.com">Email Me!</a></p>
+<p>All rights to the original Apple-1 software and hardware belong to Apple Inc.</p>
+<p>This site and emulator are <strong>not affiliated</strong> with Apple Inc.</p>
+<p>WOZMON/Integer BASIC were originally written in 1976 by Steve Wozniak.</p>
+<p>Special thanks to <a href="https://sbprojects.net" target="_blank">San Bergmans</a> and <a href="https://github.com/whscullin/apple1js" target="_blank">whscullin</a>. <br> Their documentation on the APPLE-1 was very helpful in the creation of this emulator! Be sure to check them out!
+</div>
+<hr>
+
+
+<script>
+// WOZMON state flag
+let wozmonActive = false;
+// Prevent race conditions for program loading
+let programLoaded = false;
+class CPU6502 {
+  constructor(ramSizeKB = 4) {
+    // Map KB to byte sizes
+    const ramSizeMap = {
+      4: 0x1000,   
+      8: 0x2000,   
+      16: 0x4000,  
+      32: 0x8000,  
+      48: 0xC000   
+    };
+    this.ram = new Uint8Array(ramSizeMap[ramSizeKB] || 0x1000);
+    this.ramSize = ramSizeKB;
+    this.rom = new Uint8Array(0x0400);
+    this.basic = new Uint8Array(0x1000);
+    this.modifiedAddresses = new Set();
+    
+
+    this.A=0; this.X=0; this.Y=0; this.PC=0; this.S=0xFF;
+    this.C=0; this.Z=0; this.I=0; this.D=0; this.B=0; this.V=0; this.N=0;
+    this.opcode=0; this.cycles=0; this.totalCycles=0; this.pageCrossed=false;
+    this.instructionMap={}; this.cycleTable={};
+    this.setupInstructions(); this.setupCycleTiming();
+    this._kbdBuf = []; this._videoHook = null;
+    this._breakFlag = false;
+  }
+  read(addr) {
+    addr &= 0xFFFF;
+    if (addr === 0xD011) return (this._kbdBuf.length ? 0x80 : 0x00);
+    if (addr === 0xD010) return (this._kbdBuf.length ? this._kbdBuf.shift()&0xFF : 0x80);
+    if (addr === 0xD012) return 0x00;
+    if (addr === 0xD013) return 0x00;
+    if (addr <= (this.ram.length - 1)) return this.ram[addr] & 0xFF;
+    if (addr >= 0xE000 && addr <= 0xEFFF) return this.basic[addr-0xE000] & 0xFF;
+    if (addr >= 0xFC00) return this.rom[addr-0xFC00] & 0xFF;
+    return 0xFF;
+  }
+
+write(addr, val) {
+  addr &= 0xFFFF; val &= 0xFF;
+  if (addr === 0xD012) {
+    if (typeof this._videoHook === 'function') this._videoHook(val & 0x7F);
+    return;
+  }
+  if (addr <= (this.ram.length - 1)) {
+    this.ram[addr] = val;
+    // Only track modifications when NOT in WOZMON/system ROM space
+    // WOZMON runs at $FF00-$FFFF, so only track user writes
+    if (this.PC < 0xFF00 || addr >= 0x0300) {
+      // Additionally exclude stack area
+      if (addr < 0x0100 || addr >= 0x0200) {
+        this.modifiedAddresses.add(addr);
+      }
+    }
+    return;
+  }
+}
+  checkPageCross(a,b){ return (a & 0xFF00) !== (b & 0xFF00); }
+  push(v){ this.write(0x100 + (this.S & 0xFF), v & 0xFF); this.S = (this.S - 1) & 0xFF; }
+  pop(){ this.S = (this.S + 1) & 0xFF; return this.read(0x100 + (this.S & 0xFF)); }
+  setZN(v){ v&=0xFF; this.Z = (v===0)?1:0; this.N = (v & 0x80)?1:0; }
+  getStatus(){ return (this.N<<7)|(this.V<<6)|(1<<5)|(this.B<<4)|(this.D<<3)|(this.I<<2)|(this.Z<<1)|this.C; }
+  setStatus(v){ this.N=(v>>7)&1; this.V=(v>>6)&1; this.B=(v>>4)&1; this.D=(v>>3)&1; this.I=(v>>2)&1; this.Z=(v>>1)&1; this.C=v&1; }
+
+  imm(){ return this.read(this.PC++); }
+  zp(){ return this.read(this.read(this.PC++)); }
+  zpx(){ return this.read((this.read(this.PC++) + this.X) & 0xFF); }
+  zpy(){ return this.read((this.read(this.PC++) + this.Y) & 0xFF); }
+  abs(){ const lo=this.read(this.PC++),hi=this.read(this.PC++); return this.read((hi<<8)|lo); }
+  absAddr(){ const lo=this.read(this.PC++),hi=this.read(this.PC++); return ((hi<<8)|lo)&0xFFFF; }
+  absXAddr(){ const base=this.absAddr(); const a=(base+this.X)&0xFFFF; this.pageCrossed=this.checkPageCross(base,a); return a; }
+  absYAddr(){ const base=this.absAddr(); const a=(base+this.Y)&0xFFFF; this.pageCrossed=this.checkPageCross(base,a); return a; }
+  ind(){ const lo=this.read(this.PC++),hi=this.read(this.PC++); const p=((hi<<8)|lo)&0xFFFF; const low=this.read(p); const high=this.read((p&0xFF00)|((p+1)&0xFF)); return ((high<<8)|low)&0xFFFF; }
+  indx(){ const zp=(this.read(this.PC++)+this.X)&0xFF; const lo=this.read(zp&0xFF); const hi=this.read((zp+1)&0xFF); return ((hi<<8)|lo)&0xFFFF; }
+  indy(){ const zp=this.read(this.PC++)&0xFF; const lo=this.read(zp); const hi=this.read((zp+1)&0xFF); const base=((hi<<8)|lo)&0xFFFF; const a=(base+this.Y)&0xFFFF; this.pageCrossed=this.checkPageCross(base,a); return a; }
+
+  LDA(v){ this.A=v&0xFF; this.setZN(this.A); } STA(a){ this.write(a,this.A); }
+  LDX(v){ this.X=v&0xFF; this.setZN(this.X); } STX(a){ this.write(a,this.X); }
+  LDY(v){ this.Y=v&0xFF; this.setZN(this.Y); } STY(a){ this.write(a,this.Y); }
+  TAX(){ this.X=this.A&0xFF; this.setZN(this.X); } TXA(){ this.A=this.X&0xFF; this.setZN(this.A); }
+  TAY(){ this.Y=this.A&0xFF; this.setZN(this.Y); } TYA(){ this.A=this.Y&0xFF; this.setZN(this.A); }
+  TSX(){ this.X=this.S&0xFF; this.setZN(this.X);} TXS(){ this.S=this.X&0xFF; }
+  PHA(){ this.push(this.A);} PLA(){ this.A=this.pop(); this.setZN(this.A);}
+  PHP(){ this.push(this.getStatus()|0x10);} PLP(){ this.setStatus(this.pop());}
+  INX(){ this.X=(this.X+1)&0xFF; this.setZN(this.X);} DEX(){ this.X=(this.X-1)&0xFF; this.setZN(this.X);}
+  INY(){ this.Y=(this.Y+1)&0xFF; this.setZN(this.Y);} DEY(){ this.Y=(this.Y-1)&0xFF; this.setZN(this.Y);}
+  CLC(){ this.C=0;} SEC(){ this.C=1;} CLI(){ this.I=0;} SEI(){ this.I=1;}
+  CLV(){ this.V=0;} CLD(){ this.D=0;} SED(){ this.D=1;} NOP(){}
+
+  JMP(a){ this.PC=a&0xFFFF; }
+  JSR(a){ const ret=(this.PC-1)&0xFFFF; this.push((ret>>8)&0xFF); this.push(ret&0xFF); this.PC=a&0xFFFF; }
+  RTS(){ const lo=this.pop(),hi=this.pop(); this.PC=(((hi<<8)|lo)+1)&0xFFFF; }
+  BRK(){ this.B=1; this.PC=(this.PC+1)&0xFFFF; const returnAddr = this.PC;this.push((this.PC>>8)&0xFF); this.push(this.PC&0xFF); this.push(this.getStatus()|0x10); this.I=1; const lo=this.read(0xFFFE); const hi=this.read(0xFFFF); this.PC=((hi<<8)|lo)&0xFFFF;if (this.PC === 0xFF00 && returnAddr < 0x0100) {let startAddr = returnAddr & 0xFF00;while (startAddr < returnAddr && this.ram[startAddr] === 0x00) { startAddr++;}this.PC = startAddr;} else if (this.PC === 0xFF00) {wozmonActive = true;}}
+  RTI(){ this.setStatus(this.pop()); const lo=this.pop(),hi=this.pop(); this.PC=((hi<<8)|lo)&0xFFFF; }
+
+  ADC(v){ v&=0xFF; const sum=this.A+v+(this.C?1:0); this.C=sum>0xFF?1:0; this.V=((~(this.A^v)&(this.A^sum))&0x80)?1:0; this.A=sum&0xFF; this.setZN(this.A); }
+  SBC(v){ v&=0xFF; const inv=(v^0xFF)&0xFF; this.ADC(inv); }
+  AND(v){ this.A&=(v&0xFF); this.setZN(this.A); }
+  ORA(v){ this.A|=(v&0xFF); this.setZN(this.A); }
+  EOR(v){ this.A^=(v&0xFF); this.setZN(this.A); }
+  CMP(v){ const r=(this.A-(v&0xFF))&0x1FF; this.C=(r<0x100)?1:0; this.setZN(r&0xFF); }
+  CPX(v){ const r=(this.X-(v&0xFF))&0x1FF; this.C=(r<0x100)?1:0; this.setZN(r&0xFF); }
+  CPY(v){ const r=(this.Y-(v&0xFF))&0x1FF; this.C=(r<0x100)?1:0; this.setZN(r&0xFF); }
+  BIT(v){ v&=0xFF; this.Z=(this.A&v)?0:1; this.N=(v&0x80)?1:0; this.V=(v&0x40)?1:0; }
+
+  ASL_A(){ this.C=(this.A>>7)&1; this.A=(this.A<<1)&0xFF; this.setZN(this.A); }
+  ASL(a){ let v=this.read(a); this.C=(v>>7)&1; v=(v<<1)&0xFF; this.write(a,v); this.setZN(v); }
+  LSR_A(){ this.C=this.A&1; this.A=(this.A>>>1)&0xFF; this.setZN(this.A); }
+  LSR(a){ let v=this.read(a); this.C=v&1; v=(v>>>1)&0xFF; this.write(a,v); this.setZN(v); }
+  ROL_A(){ const oldC=this.C; this.C=(this.A>>7)&1; this.A=((this.A<<1)|oldC)&0xFF; this.setZN(this.A); }
+  ROL(a){ let v=this.read(a); const oldC=this.C; this.C=(v>>7)&1; v=((v<<1)|oldC)&0xFF; this.write(a,v); this.setZN(v); }
+  ROR_A(){ const oldC=this.C; this.C=this.A&1; this.A=((this.A>>>1)|(oldC<<7))&0xFF; this.setZN(this.A); }
+  ROR(a){ let v=this.read(a); const oldC=this.C; this.C=v&1; v=((v>>>1)|(oldC<<7))&0xFF; this.write(a,v); this.setZN(v); }
+
+  INC(a){ let v=(this.read(a)+1)&0xFF; this.write(a,v); this.setZN(v); }
+  DEC(a){ let v=(this.read(a)-1)&0xFF; this.write(a,v); this.setZN(v); }
+
+  LAX(v){ this.A=this.X=v&0xFF; this.setZN(this.A); }
+  SAX(a){ this.write(a,this.A & this.X); }
+  DCP(a){ this.DEC(a); this.CMP(this.read(a)); }
+  ISC(a){ this.INC(a); this.SBC(this.read(a)); }
+  SLO(a){ this.ASL(a); this.ORA(this.read(a)); }
+  RLA(a){ this.ROL(a); this.AND(this.read(a)); }
+  SRE(a){ this.LSR(a); this.EOR(this.read(a)); }
+  RRA(a){ this.ROR(a); this.ADC(this.read(a)); }
+  ANC(v){ this.AND(v); this.C=this.N; }
+  ALR(v){ this.AND(v); this.LSR_A(); }
+  ARR(v){ this.AND(v); this.ROR_A(); this.C=(this.A>>6)&1; this.V=((this.A>>6)^(this.A>>5))&1; }
+  XAA(v){ this.A = this.X & (v & 0xFF); this.setZN(this.A); }
+  AXS(v){ const temp=(this.A & this.X)&0xFF; const result=temp-(v&0xFF); this.X=result&0xFF; this.C=(result>=0)?1:0; this.setZN(this.X); }
+  SHY(a){ const val=this.Y & (((a>>>8)+1)&0xFF); this.write(a,val); }
+  SHX(a){ const val=this.X & (((a>>>8)+1)&0xFF); this.write(a,val); }
+  rel(){ const off=this.read(this.PC++); const target=(off&0x80)?(this.PC+off-0x100)&0xFFFF:(this.PC+off)&0xFFFF; this.pageCrossed=this.checkPageCross(this.PC,target); return target; }
+  BCC(addr){ if (this.C===0){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BCS(addr){ if (this.C===1){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BEQ(addr){ if (this.Z===1){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BNE(addr){ if (this.Z===0){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BPL(addr){ if (this.N===0){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BMI(addr){ if (this.N===1){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BVC(addr){ if (this.V===0){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+  BVS(addr){ if (this.V===1){ this.PC=addr; this.cycles+=1; if (this.pageCrossed) this.cycles+=1; } }
+
+  setupCycleTiming(){ this.cycleTable = [
+    7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    6,6,2,8,3,3,5,5,4,2,2,2,4,4,6,6,2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    6,6,2,8,3,3,5,5,3,2,2,2,3,4,6,6,2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    6,6,2,8,3,3,5,5,4,2,2,2,5,4,6,6,2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,2,6,2,6,4,4,4,4,2,5,2,5,5,5,5,5,
+    2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,2,5,2,5,4,4,4,4,2,4,2,4,4,4,4,4,
+    2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+    2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7
+  ];}
+
+  setupInstructions(){
+    for (let i = 0; i < 256; i++) {
+      this.instructionMap[i] = () => {
+        console.warn(`KIL instruction: ${i.toString(16).padStart(2, '0')}`);
+        this.PC = (this.PC - 1) & 0xFFFF;
+      };
+    }
+    this.instructionMap[0x00] = () => this.BRK();
+    this.instructionMap[0xEA] = () => this.NOP();
+    this.instructionMap[0xA9] = () => this.LDA(this.imm());
+    this.instructionMap[0xA5] = () => this.LDA(this.zp());
+    this.instructionMap[0xB5] = () => this.LDA(this.zpx());
+    this.instructionMap[0xAD] = () => this.LDA(this.abs());
+    this.instructionMap[0xBD] = () => this.LDA(this.read(this.absXAddr()));
+    this.instructionMap[0xB9] = () => this.LDA(this.read(this.absYAddr()));
+    this.instructionMap[0xA1] = () => this.LDA(this.read(this.indx()));
+    this.instructionMap[0xB1] = () => this.LDA(this.read(this.indy()));
+    this.instructionMap[0x85] = () => this.STA((this.read(this.PC++)) & 0xFF);
+    this.instructionMap[0x95] = () => this.STA((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x8D] = () => this.STA(this.absAddr());
+    this.instructionMap[0x9D] = () => this.STA(this.absXAddr());
+    this.instructionMap[0x99] = () => this.STA(this.absYAddr());
+    this.instructionMap[0x81] = () => this.STA(this.indx());
+    this.instructionMap[0x91] = () => this.STA(this.indy());
+    this.instructionMap[0xA2] = () => this.LDX(this.imm());
+    this.instructionMap[0xA6] = () => this.LDX(this.zp());
+    this.instructionMap[0xB6] = () => this.LDX(this.zpy());
+    this.instructionMap[0xAE] = () => this.LDX(this.abs());
+    this.instructionMap[0xBE] = () => this.LDX(this.read(this.absYAddr()));
+    this.instructionMap[0xA0] = () => this.LDY(this.imm());
+    this.instructionMap[0xA4] = () => this.LDY(this.zp());
+    this.instructionMap[0xB4] = () => this.LDY(this.zpx());
+    this.instructionMap[0xAC] = () => this.LDY(this.abs());
+    this.instructionMap[0xBC] = () => this.LDY(this.read(this.absXAddr()));
+    this.instructionMap[0x86] = () => this.STX(this.read(this.PC++));
+    this.instructionMap[0x96] = () => this.STX((this.read(this.PC++) + this.Y) & 0xFF);
+    this.instructionMap[0x8E] = () => this.STX(this.absAddr());
+    this.instructionMap[0x84] = () => this.STY(this.read(this.PC++));
+    this.instructionMap[0x94] = () => this.STY((this.read(this.PC++)+ this.X) & 0xFF);
+    this.instructionMap[0x8C] = () => this.STY(this.absAddr());
+    this.instructionMap[0xAA] = () => this.TAX();
+    this.instructionMap[0x8A] = () => this.TXA();
+    this.instructionMap[0xA8] = () => this.TAY();
+    this.instructionMap[0x98] = () => this.TYA();
+    this.instructionMap[0xBA] = () => this.TSX();
+    this.instructionMap[0x9A] = () => this.TXS();
+    this.instructionMap[0x48] = () => this.PHA();
+    this.instructionMap[0x68] = () => this.PLA();
+    this.instructionMap[0x08] = () => this.PHP();
+    this.instructionMap[0x28] = () => this.PLP();
+    this.instructionMap[0xE8] = () => this.INX();
+    this.instructionMap[0xCA] = () => this.DEX();
+    this.instructionMap[0xC8] = () => this.INY();
+    this.instructionMap[0x88] = () => this.DEY();
+    this.instructionMap[0xE6] = () => this.INC(this.read(this.PC++));
+    this.instructionMap[0xF6] = () => this.INC((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0xEE] = () => this.INC(this.absAddr());
+    this.instructionMap[0xFE] = () => this.INC(this.absXAddr());
+    this.instructionMap[0xC6] = () => this.DEC(this.read(this.PC++));
+    this.instructionMap[0xD6] = () => this.DEC((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0xCE] = () => this.DEC(this.absAddr());
+    this.instructionMap[0xDE] = () => this.DEC(this.absXAddr());
+    this.instructionMap[0x69] = () => this.ADC(this.imm());
+    this.instructionMap[0x65] = () => this.ADC(this.zp());
+    this.instructionMap[0x75] = () => this.ADC(this.zpx());
+    this.instructionMap[0x6D] = () => this.ADC(this.abs());
+    this.instructionMap[0x7D] = () => this.ADC(this.read(this.absXAddr()));
+    this.instructionMap[0x79] = () => this.ADC(this.read(this.absYAddr()));
+    this.instructionMap[0x61] = () => this.ADC(this.read(this.indx()));
+    this.instructionMap[0x71] = () => this.ADC(this.read(this.indy()));
+    this.instructionMap[0xE9] = () => this.SBC(this.imm());
+    this.instructionMap[0xE5] = () => this.SBC(this.zp());
+    this.instructionMap[0xF5] = () => this.SBC(this.zpx());
+    this.instructionMap[0xED] = () => this.SBC(this.abs());
+    this.instructionMap[0xFD] = () => this.SBC(this.read(this.absXAddr()));
+    this.instructionMap[0xF9] = () => this.SBC(this.read(this.absYAddr()));
+    this.instructionMap[0xE1] = () => this.SBC(this.read(this.indx()));
+    this.instructionMap[0xF1] = () => this.SBC(this.read(this.indy()));
+    this.instructionMap[0x29] = () => this.AND(this.imm());
+    this.instructionMap[0x25] = () => this.AND(this.zp());
+    this.instructionMap[0x35] = () => this.AND(this.zpx());
+    this.instructionMap[0x2D] = () => this.AND(this.abs());
+    this.instructionMap[0x3D] = () => this.AND(this.read(this.absXAddr()));
+    this.instructionMap[0x39] = () => this.AND(this.read(this.absYAddr()));
+    this.instructionMap[0x21] = () => this.AND(this.read(this.indx()));
+    this.instructionMap[0x31] = () => this.AND(this.read(this.indy()));
+    this.instructionMap[0x09] = () => this.ORA(this.imm());
+    this.instructionMap[0x05] = () => this.ORA(this.zp());
+    this.instructionMap[0x15] = () => this.ORA(this.zpx());
+    this.instructionMap[0x0D] = () => this.ORA(this.abs());
+    this.instructionMap[0x1D] = () => this.ORA(this.read(this.absXAddr()));
+    this.instructionMap[0x19] = () => this.ORA(this.read(this.absYAddr()));
+    this.instructionMap[0x01] = () => this.ORA(this.read(this.indx()));
+    this.instructionMap[0x11] = () => this.ORA(this.read(this.indy()));
+    this.instructionMap[0x49] = () => this.EOR(this.imm());
+    this.instructionMap[0x45] = () => this.EOR(this.zp());
+    this.instructionMap[0x55] = () => this.EOR(this.zpx());
+    this.instructionMap[0x4D] = () => this.EOR(this.abs());
+    this.instructionMap[0x5D] = () => this.EOR(this.read(this.absXAddr()));
+    this.instructionMap[0x59] = () => this.EOR(this.read(this.absYAddr()));
+    this.instructionMap[0x41] = () => this.EOR(this.read(this.indx()));
+    this.instructionMap[0x51] = () => this.EOR(this.read(this.indy()));
+    this.instructionMap[0xC9] = () => this.CMP(this.imm());
+    this.instructionMap[0xC5] = () => this.CMP(this.zp());
+    this.instructionMap[0xD5] = () => this.CMP(this.zpx());
+    this.instructionMap[0xCD] = () => this.CMP(this.abs());
+    this.instructionMap[0xDD] = () => this.CMP(this.read(this.absXAddr()));
+    this.instructionMap[0xD9] = () => this.CMP(this.read(this.absYAddr()));
+    this.instructionMap[0xC1] = () => this.CMP(this.read(this.indx()));
+    this.instructionMap[0xD1] = () => this.CMP(this.read(this.indy()));
+    this.instructionMap[0xE0] = () => this.CPX(this.imm());
+    this.instructionMap[0xE4] = () => this.CPX(this.zp());
+    this.instructionMap[0xEC] = () => this.CPX(this.abs());
+    this.instructionMap[0xC0] = () => this.CPY(this.imm());
+    this.instructionMap[0xC4] = () => this.CPY(this.zp());
+    this.instructionMap[0xCC] = () => this.CPY(this.abs());
+    this.instructionMap[0x24] = () => this.BIT(this.zp());
+    this.instructionMap[0x2C] = () => this.BIT(this.abs());
+    this.instructionMap[0x0A] = () => this.ASL_A();
+    this.instructionMap[0x06] = () => this.ASL(this.read(this.PC++));
+    this.instructionMap[0x16] = () => this.ASL((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x0E] = () => this.ASL(this.absAddr());
+    this.instructionMap[0x1E] = () => this.ASL(this.absXAddr());
+    this.instructionMap[0x4A] = () => this.LSR_A();
+    this.instructionMap[0x46] = () => this.LSR(this.read(this.PC++));
+    this.instructionMap[0x56] = () => this.LSR((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x4E] = () => this.LSR(this.absAddr());
+    this.instructionMap[0x5E] = () => this.LSR(this.absXAddr());
+    this.instructionMap[0x2A] = () => this.ROL_A();
+    this.instructionMap[0x26] = () => this.ROL(this.read(this.PC++));
+    this.instructionMap[0x36] = () => this.ROL((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x2E] = () => this.ROL(this.absAddr());
+    this.instructionMap[0x3E] = () => this.ROL(this.absXAddr());
+    this.instructionMap[0x6A] = () => this.ROR_A();
+    this.instructionMap[0x66] = () => this.ROR(this.read(this.PC++));
+    this.instructionMap[0x76] = () => this.ROR((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x6E] = () => this.ROR(this.absAddr());
+    this.instructionMap[0x7E] = () => this.ROR(this.absXAddr());
+    this.instructionMap[0x90] = () => this.BCC(this.rel());
+    this.instructionMap[0xB0] = () => this.BCS(this.rel());
+    this.instructionMap[0xF0] = () => this.BEQ(this.rel());
+    this.instructionMap[0x30] = () => this.BMI(this.rel());
+    this.instructionMap[0xD0] = () => this.BNE(this.rel());
+    this.instructionMap[0x10] = () => this.BPL(this.rel());
+    this.instructionMap[0x50] = () => this.BVC(this.rel());
+    this.instructionMap[0x70] = () => this.BVS(this.rel());
+    this.instructionMap[0x4C] = () => this.JMP(this.absAddr());
+    this.instructionMap[0x6C] = () => this.JMP(this.ind());
+    this.instructionMap[0x20] = () => this.JSR(this.absAddr());
+    this.instructionMap[0x60] = () => this.RTS();
+    this.instructionMap[0x40] = () => this.RTI();
+    this.instructionMap[0x18] = () => this.CLC();
+    this.instructionMap[0x38] = () => this.SEC();
+    this.instructionMap[0x58] = () => this.CLI();
+    this.instructionMap[0x78] = () => this.SEI();
+    this.instructionMap[0xB8] = () => this.CLV();
+    this.instructionMap[0xD8] = () => this.CLD();
+    this.instructionMap[0xF8] = () => this.SED();
+    this.instructionMap[0xA7] = () => this.LAX(this.zp());
+    this.instructionMap[0xB7] = () => this.LAX(this.zpy());
+    this.instructionMap[0xAF] = () => this.LAX(this.abs());
+    this.instructionMap[0xBF] = () => this.LAX(this.read(this.absYAddr()));
+    this.instructionMap[0xA3] = () => this.LAX(this.read(this.indx()));
+    this.instructionMap[0xB3] = () => this.LAX(this.read(this.indy()));
+    this.instructionMap[0x87] = () => this.SAX(this.read(this.PC++));
+    this.instructionMap[0x97] = () => this.SAX((this.read(this.PC++) + this.Y) & 0xFF);
+    this.instructionMap[0x8F] = () => this.SAX(this.absAddr());
+    this.instructionMap[0x83] = () => this.SAX(this.indx());
+    this.instructionMap[0xC7] = () => this.DCP(this.read(this.PC++));
+    this.instructionMap[0xD7] = () => this.DCP((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0xCF] = () => this.DCP(this.absAddr());
+    this.instructionMap[0xDF] = () => this.DCP(this.absXAddr());
+    this.instructionMap[0xDB] = () => this.DCP(this.absYAddr());
+    this.instructionMap[0xC3] = () => this.DCP(this.indx());
+    this.instructionMap[0xD3] = () => this.DCP(this.indy());
+    this.instructionMap[0xE7] = () => this.ISC(this.read(this.PC++));
+    this.instructionMap[0xF7] = () => this.ISC((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0xEF] = () => this.ISC(this.absAddr());
+    this.instructionMap[0xFF] = () => this.ISC(this.absXAddr());
+    this.instructionMap[0xFB] = () => this.ISC(this.absYAddr());
+    this.instructionMap[0xE3] = () => this.ISC(this.indx());
+    this.instructionMap[0xF3] = () => this.ISC(this.indy());
+    this.instructionMap[0x07] = () => this.SLO(this.read(this.PC++));
+    this.instructionMap[0x17] = () => this.SLO((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x0F] = () => this.SLO(this.absAddr());
+    this.instructionMap[0x1F] = () => this.SLO(this.absXAddr());
+    this.instructionMap[0x1B] = () => this.SLO(this.absYAddr());
+    this.instructionMap[0x03] = () => this.SLO(this.indx());
+    this.instructionMap[0x13] = () => this.SLO(this.indy());
+    this.instructionMap[0x27] = () => this.RLA(this.read(this.PC++));
+    this.instructionMap[0x37] = () => this.RLA((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x2F] = () => this.RLA(this.absAddr());
+    this.instructionMap[0x3F] = () => this.RLA(this.absXAddr());
+    this.instructionMap[0x3B] = () => this.RLA(this.absYAddr());
+    this.instructionMap[0x23] = () => this.RLA(this.indx());
+    this.instructionMap[0x33] = () => this.RLA(this.indy());
+    this.instructionMap[0x47] = () => this.SRE(this.read(this.PC++));
+    this.instructionMap[0x57] = () => this.SRE((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x4F] = () => this.SRE(this.absAddr());
+    this.instructionMap[0x5F] = () => this.SRE(this.absXAddr());
+    this.instructionMap[0x5B] = () => this.SRE(this.absYAddr());
+    this.instructionMap[0x43] = () => this.SRE(this.indx());
+    this.instructionMap[0x53] = () => this.SRE(this.indy());
+    this.instructionMap[0x67] = () => this.RRA(this.read(this.PC++));
+    this.instructionMap[0x77] = () => this.RRA((this.read(this.PC++) + this.X) & 0xFF);
+    this.instructionMap[0x6F] = () => this.RRA(this.absAddr());
+    this.instructionMap[0x7F] = () => this.RRA(this.absXAddr());
+    this.instructionMap[0x7B] = () => this.RRA(this.absYAddr());
+    this.instructionMap[0x63] = () => this.RRA(this.indx());
+    this.instructionMap[0x73] = () => this.RRA(this.indy());
+    this.instructionMap[0x0B] = () => this.ANC(this.imm());
+    this.instructionMap[0x2B] = () => this.ANC(this.imm());
+    this.instructionMap[0x4B] = () => this.ALR(this.imm());
+    this.instructionMap[0x6B] = () => this.ARR(this.imm());
+    this.instructionMap[0x8B] = () => this.XAA(this.imm());
+    this.instructionMap[0xCB] = () => this.AXS(this.imm());
+    this.instructionMap[0x9C] = () => this.SHY(this.absXAddr());
+    this.instructionMap[0x9E] = () => this.SHX(this.absYAddr());
+    this.instructionMap[0x1A] = () => this.NOP();
+    this.instructionMap[0x3A] = () => this.NOP();
+    this.instructionMap[0x5A] = () => this.NOP();
+    this.instructionMap[0x7A] = () => this.NOP();
+    this.instructionMap[0xDA] = () => this.NOP();
+    this.instructionMap[0xFA] = () => this.NOP();
+    this.instructionMap[0x04] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x44] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x64] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x14] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x34] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x54] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x74] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0xD4] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0xF4] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x0C] = () => { this.PC += 2; this.NOP(); };
+    this.instructionMap[0x1C] = () => { this.absXAddr(); this.NOP(); };
+    this.instructionMap[0x3C] = () => { this.absXAddr(); this.NOP(); };
+    this.instructionMap[0x5C] = () => { this.absXAddr(); this.NOP(); };
+    this.instructionMap[0x7C] = () => { this.absXAddr(); this.NOP(); };
+    this.instructionMap[0xDC] = () => { this.absXAddr(); this.NOP(); };
+    this.instructionMap[0xFC] = () => { this.absXAddr(); this.NOP(); };
+    this.instructionMap[0x80] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x82] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0x89] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0xC2] = () => { this.PC++; this.NOP(); };
+    this.instructionMap[0xE2] = () => { this.PC++; this.NOP(); };
+  }
+
+  checkBreak() {
+    if (this._breakFlag) {
+      this._breakFlag = false;
+      if (this.PC >= 0xE000 && this.PC <= 0xEFFF) {
+        videoOutputQueue = [];
+        this._videoHook(0x0D);
+        this.PC = 0xE8C3;
+        this.I = 1;
+        return true;
+      }
+      return false;
+    }
+    return false;
+  }
+
+  reset(){
+    this.A = this.X = this.Y = 0;
+    this.S = 0xFF;
+    this.C = this.Z = this.I = this.D = this.B = this.V = this.N = 0;
+    this.I = 1; this.B = 0;
+    const lo = this.read(0xFFFC); const hi = this.read(0xFFFD);
+    this.PC = ((hi << 8) | lo) & 0xFFFF;
+    this.cycles = 7; this.totalCycles += 7;
+    this._breakFlag = false;
+  }
+
+  warmReset() {
+    this.PC = 0xFF00;
+    this.I = 1;
+    this.cycles = 7;
+    this.totalCycles += 7;
+    this._breakFlag = false;
+  }
+
+  triggerBreak() {
+    this._breakFlag = true;
+  }
+
+  step(){
+    if (this.checkBreak()) {
+      return this.cycles;
+    }  
+    this.opcode = this.read(this.PC++);
+    this.pageCrossed = false;
+    this.cycles = this.cycleTable[this.opcode] || 2;
+    const instr = this.instructionMap[this.opcode & 0xFF];
+    if (instr) instr(); else console.warn(`Unimplemented: ${this.opcode.toString(16)}`);
+    if (this.pageCrossed && this.needsPageCrossPenalty(this.opcode)) this.cycles += 1;
+    this.totalCycles += this.cycles;
+    return this.cycles;
+  }
+
+  needsPageCrossPenalty(op){ const s=new Set([
+    0x1D,0x19,0x39,0x3D,0x59,0x5D,0x79,0x7D, 0xB1,0xB9,0xBD,0xBE,0xBC,
+    0xD1,0xD9,0xDD,0xF1,0xF9,0xFD, 0x1C,0x3C,0x5C,0x7C,0xDC,0xFC, 0xBF,0xB3,
+    0x1B,0x3B,0x5B,0x7B,0xDB,0xFB, 0xDF,0xFF,0x9C,0x9E
+  ]); return s.has(op); }
+
+  runCycles(target){
+    const start = this.totalCycles;
+    while ((this.totalCycles - start) < target) this.step();
+    return this.totalCycles - start;
+  }
+}
+
+// Terminal Display
+const ROWS = 24, COLS = 40;
+let screen = Array.from({length:ROWS}, () => Array(COLS).fill(' '));
+let cursor = {x:0,y:0};
+let userTyped = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+let pendingUserAt = false;
+let showPromptCursor = false;
+
+let dirtyRows = new Set();
+let lastRenderedScreen = Array.from({length:ROWS}, () => Array(COLS).fill(' '));
+let lastCursorPos = {x: 0, y: 0};
+let renderScheduled = false;
+
+const termEl = document.getElementById('terminal');
+const pcEl = document.getElementById('pc');
+const errEl = document.getElementById('err');
+const indicatorEl = document.getElementById('indicator');
+
+let blinkState = true;
+setInterval(() => { 
+  blinkState = !blinkState; 
+  // Mark cursor row as dirty for blink update
+  if (cursor.y < ROWS) {
+    dirtyRows.add(cursor.y);
+  }
+  scheduleRender();
+}, 350);
+
+function markRowDirty(row) {
+  if (row >= 0 && row < ROWS) {
+    dirtyRows.add(row);
+  }
+}
+
+function scheduleRender() {
+  if (!renderScheduled) {
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+      renderScheduled = false;
+      renderScreen();
+    });
+  }
+}
+function renderScreen(){
+  let display = screen.map(row => row.slice());
+  
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (display[y][x] === "@" && !userTyped[y][x]) {
+        if (!blinkState && (x > 0 && display[y][x-1] === "_" || (cursor.y === y && cursor.x === x))) {
+          display[y][x] = " ";
+        }
+      }
+    }
+  }
+
+  if ((wozmonActive && document.activeElement === termEl) || showPromptCursor) {
+    if (cursor.y < ROWS && cursor.x < COLS) {
+      display[cursor.y][cursor.x] = blinkState ? '@' : screen[cursor.y][cursor.x];
+    }
+  }
+  const cursorMoved = (cursor.x !== lastCursorPos.x || cursor.y !== lastCursorPos.y);
+  
+  if (cursorMoved) {
+    markRowDirty(lastCursorPos.y);
+    markRowDirty(cursor.y);
+    lastCursorPos = {x: cursor.x, y: cursor.y};
+  }
+
+  // If nothing is dirty and cursor hasn't moved, skip render
+  if (dirtyRows.size === 0 && !cursorMoved) {
+    return;
+  }
+
+  // Check if any dirty rows actually changed
+  let hasChanges = false;
+  for (let y of dirtyRows) {
+    if (y >= ROWS) continue;
+    for (let x = 0; x < COLS; x++) {
+      if (display[y][x] !== lastRenderedScreen[y][x]) {
+        hasChanges = true;
+        break;
+      }
+    }
+    if (hasChanges) break;
+  }
+
+
+  if (hasChanges || dirtyRows.size === ROWS) {
+    termEl.textContent = display.map(row => row.join('')).join('\n');
+    lastRenderedScreen = display;
+  } else {
+    termEl.textContent = display.map(row => row.join('')).join('\n');
+    lastRenderedScreen = display;
+  }
+
+  // Clear dirty flags after render
+  dirtyRows.clear();
+}
+function scroll() {
+  screen.shift();
+  screen.push(Array(COLS).fill(' '));
+  userTyped.shift();
+  userTyped.push(Array(COLS).fill(false));
+  cursor.y = ROWS - 1;
+  for (let i = 0; i < ROWS; i++) {
+    markRowDirty(i);
+  }
+}
+
+function newline() {
+  cursor.x = 0;
+  cursor.y++;
+  if (cursor.y >= ROWS) scroll();
+  markRowDirty(cursor.y);
+}
+
+function printChar(ch) {
+  if (ch === '\n') {
+    newline();
+    return;
+  }
+
+  let c = String.fromCharCode(ch & 0x7F);
+  if (c >= 'a' && c <= 'z') c = c.toUpperCase();
+  
+  const apple1Charset = /^[ !"#$%&'()*+,\-\.\/0-9:;<=>?@A-Z\[\\\]\^_]$/;
+
+  if (apple1Charset.test(c)) {
+    if (pendingUserAt && c === '@') {
+      userTyped[cursor.y][cursor.x] = true;
+      pendingUserAt = false;
+    } else {
+      userTyped[cursor.y][cursor.x] = false;
+    }
+
+    screen[cursor.y][cursor.x] = c;
+    markRowDirty(cursor.y);
+    cursor.x++;
+  }
+
+  if (cursor.x >= COLS) newline();
+}
+
+function initVideoPattern() {
+  screen = Array.from({ length: ROWS }, (_, row) =>
+    Array.from({ length: COLS }, (_, col) =>
+      col % 2 === 0 ? '_' : '@'
+    )
+  );
+  cursor = { x: 0, y: 0 };
+  userTyped = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+  showPromptCursor = false;
+
+  for (let i = 0; i < ROWS; i++) {
+    markRowDirty(i);
+  }
+  scheduleRender();
+}
+
+function clearScreen() {
+  screen = Array.from({ length: ROWS }, () => Array(COLS).fill(' '));
+  cursor = { x: 0, y: 0 };
+  userTyped = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+  showPromptCursor = true;
+  
+
+  for (let i = 0; i < ROWS; i++) {
+    markRowDirty(i);
+  }
+  scheduleRender();
+}
+
+function b64ToBytes(base64) {
+  const binString = atob(base64);
+  const len = binString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+let cpu = null;
+function initCPU() {
+  const selectedMem = document.querySelector('input[name="memsize"]:checked')?.value || "4";
+  cpu = new CPU6502(parseInt(selectedMem));
+  console.log(`Initialized HoneyCrisp with ${selectedMem}KB RAM (${(cpu.ram.length).toString(16).toUpperCase()} bytes, $0000-$${(cpu.ram.length - 1).toString(16).toUpperCase()})`);
+  const ramStatusEl = document.getElementById('ramstatus');
+  if (ramStatusEl) ramStatusEl.textContent = `RAM: ${selectedMem}KB`;
+  cpu._videoHook = (byte7) => {
+    videoOutputQueue.push(byte7 & 0x7F);
+  };
+}
+let videoOutputQueue = [];
+const CHAR_OUTPUT_DELAY = 1000 / 30;
+const CHAR_OUTPUT_DELAY_PASTE = 1000 / 500;  
+let lastCharOutputTime = 0;
+let running = true;
+let isPasting = false;
+let pasteTimeout = null;
+let activeInjectionTimeout = null; 
+function enqueueKey(ascii){
+  const upper = String.fromCharCode(ascii).toUpperCase().charCodeAt(0) & 0x7F;
+  cpu._kbdBuf.push(upper | 0x80);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+    return;
+  }
+
+  if (!wozmonActive) {
+    e.preventDefault();
+    return;
+  }
+
+  if (e.ctrlKey || e.metaKey) {
+    return;
+  }
+
+
+  if (e.key === ' ' || e.key === "'") {
+    e.preventDefault();
+  }
+
+  if (['Backspace','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab'].includes(e.key)) e.preventDefault();
+  
+  if (e.key.length === 1) {
+    if (e.key === '@') pendingUserAt = true;
+    enqueueKey(e.key.charCodeAt(0));
+  } else if (e.key === 'Enter') {
+    cpu._kbdBuf.push(0x8D);
+  } else if (e.key === 'Backspace') {
+    cpu._kbdBuf.push(0xDF);
+  } else if (e.key === 'Escape') {
+    cpu._kbdBuf.push(0x9B);
+    e.preventDefault();
+  }
+});
+document.addEventListener('paste', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+    return;
+  }
+  
+  
+  
+  e.preventDefault();
+  
+  if (!wozmonActive) {
+    return;
+  }
+  
+  const text = e.clipboardData.getData('text');
+  if (!text) return;
+  
+  isPasting = true;
+  if (pasteTimeout) clearTimeout(pasteTimeout);
+  
+
+  for (const ch of text) {
+    if (ch === '\n' || ch === '\r') {
+      cpu._kbdBuf.push(0x8D); // Enter
+    } else {
+      const code = ch.toUpperCase().charCodeAt(0) & 0x7F;
+      cpu._kbdBuf.push(code | 0x80);
+    }
+  } 
+  const estimatedPasteTime = text.length * CHAR_OUTPUT_DELAY_PASTE + 500;
+  pasteTimeout = setTimeout(() => {
+    isPasting = false;
+  }, estimatedPasteTime);
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#libraryModal, #loadedModal, #saveModal')) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.tagName === 'OPTION') return;
+  if (e.target.closest('.controls, .nav, .shortcuts-box, .status-bar')) return; 
+  if (wozmonActive) {
+    setTimeout(() => termEl.focus(), 50);
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && wozmonActive) {
+    termEl.focus();
+  }
+});
+
+
+window.addEventListener('focus', () => {
+  if (wozmonActive) {
+    termEl.focus();
+  }
+});
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey || e.metaKey) {
+    switch(e.key.toUpperCase()) {
+      case 'H':
+        e.preventDefault();
+        hardReset();
+        return;
+      case 'S':
+        e.preventDefault();
+        warmReset();
+        return;
+      case 'W':
+        e.preventDefault();
+        clearScreen();
+        return;
+      case 'C':
+        e.preventDefault();
+        cpu.triggerBreak();
+        return;
+      case 'F':
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          termEl.requestFullscreen().catch(err => {
+            console.error('Fullscreen request failed:', err);
+          });
+        } else {
+          document.exitFullscreen();
+        }
+        return;
+        
+              case 'B':
+        e.preventDefault();
+        const loader = document.getElementById('programLoader');
+        if (loader) loader.click();
+        return;
+
+    }
+  }
+});
+const themeSelect = document.getElementById('themeSelect');
+
+const themes = {
+  green: { fg: '#00FF00', bg: '#000000' },
+  amber: { fg: '#FFB000', bg: '#000000' },
+  white: { fg: '#FFFFFF', bg: '#000000' },
+  purple: { fg: '#B68CFF', bg: '#000000' },
+  yellow: { fg: '#FFFF00', bg: '#000000' },
+  cyan: { fg: '#00D9FF', bg: '#000000' },
+  red: { fg: '#FF3333', bg: '#000000' },
+};
+
+function applyTheme(themeName) {
+  const theme = themes[themeName] || themes.green;
+  document.documentElement.style.setProperty('--term-fg', theme.fg);
+  document.documentElement.style.setProperty('--term-bg', theme.bg);
+  localStorage.setItem('hc_theme', themeName);
+}
+
+
+const savedTheme = localStorage.getItem('hc_theme') || 'white';
+themeSelect.value = savedTheme;
+applyTheme(savedTheme);
+const savedMemSize = localStorage.getItem('hc_memsize');
+if (savedMemSize) {
+  const radio = document.querySelector(`input[name="memsize"][value="${savedMemSize}"]`);
+  if (radio) radio.checked = true;
+}
+initCPU();
+
+themeSelect.addEventListener('change', (e) => {
+  applyTheme(e.target.value);
+});
+
+function tick(timestamp){
+  if (running) {
+    try {
+      const speedMultiplier = parseInt(document.querySelector('input[name="speed"]:checked')?.value || "1");
+      cpu.runCycles(16667 * speedMultiplier);
+      indicatorEl.classList.add('running');
+    } catch (e) {
+      if (e.message === "CPU_CRASH_0000") {
+        hardReset();
+      } else {
+        console.error("Unexpected error:", e);
+        running = false;
+      }
+    }
+
+   const speedMultiplier = parseInt(document.querySelector('input[name="speed"]:checked')?.value || "1");
+    // Character output logic:
+    if (speedMultiplier === 1) {
+      // Normal speed: use time-based output for a realistic 30Hz refresh rate
+      const currentDelay = isPasting ? CHAR_OUTPUT_DELAY_PASTE : CHAR_OUTPUT_DELAY;
+      if (videoOutputQueue.length > 0 && (timestamp - lastCharOutputTime > currentDelay)) {
+        const ch = videoOutputQueue.shift();
+        if (ch === 0x0D) {
+          printChar('\n');
+        } else {
+          printChar(ch);
+        }
+        lastCharOutputTime = timestamp;
+        scheduleRender();
+      }
+    } else {
+      const maxCharsPerFrame = speedMultiplier; 
+      let charsProcessed = 0;
+      while (videoOutputQueue.length > 0 && charsProcessed < maxCharsPerFrame) {
+        const ch = videoOutputQueue.shift();
+        if (ch === 0x0D) {
+          printChar('\n');
+        } else {
+          printChar(ch);
+        }
+        charsProcessed++;
+        scheduleRender();
+      }
+    }
+
+    pcEl.textContent = cpu.PC.toString(16).padStart(4,'0').toUpperCase();
+  }
+  requestAnimationFrame(tick);
+}
+
+// ROM Loading
+let WOZMON_BASE64 = "2Figf4wS0KmnjRHQjRPQyd/wE8mb8APIEA+p3CDv/6mNIO//oAGIMPatEdAQ+60Q0JkAAiDv/8mN0NSg/6kAqgqFK8i5AALJjfDUya6Q9PDwybrw68nS8DuGKIYphCq5AAJJsMkKkAZpiMn6kBEKCgoKogQKJigmKcrQ+MjQ4MQq8JckK1AQpSiBJuYm0LXmJ0xE/2wkADArogK1J5UllSPK0PfQFKmNIO//pSUg3P+lJCDc/6m6IO//qaAg7/+hJCDc/4YrpSTFKKUl5SmwweYk0ALmJaUkKQcQyEhKSkpKIOX/aCkPCbDJupACaQYsEtAw+40S0GAAAAAPAP8AAA==";
+let INTBASIC_BASE64 = "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";
+
+function loadWozmonROM(wozBytes) {
+  const rom = new Uint8Array(0x0400).fill(0xFF);
+  if (wozBytes.length !== 256) {
+    throw new Error("WOZMON must be 256 bytes");
+  }
+  rom.set(wozBytes, 0x300);
+  rom[0x3FA] = 0x00; rom[0x3FB] = 0xFF;
+  rom[0x3FC] = 0x00; rom[0x3FD] = 0xFF;
+  rom[0x3FE] = 0x00; rom[0x3FF] = 0xFF;
+  cpu.rom.set(rom);
+}
+
+function loadIntegerBasicROM(b64){
+  const bytes = b64ToBytes(b64);
+  const rom = new Uint8Array(0x1000).fill(0xFF);
+  rom.set(bytes.slice(0,0x1000),0);
+  cpu.basic.set(rom);
+}
+
+function hardReset() {
+  isPasting = false;
+  if (pasteTimeout) {
+    clearTimeout(pasteTimeout);
+    pasteTimeout = null;
+  }
+  if (activeInjectionTimeout) {
+    clearTimeout(activeInjectionTimeout);
+    activeInjectionTimeout = null;
+  }
+  programLoaded = false;
+  cpu._kbdBuf = [];
+  videoOutputQueue = [];
+  wozmonActive = false;
+  cpu.A = cpu.X = cpu.Y = 0;
+  cpu.S = 0xFF;
+  cpu.C = cpu.Z = cpu.I = cpu.D = cpu.B = cpu.V = cpu.N = 0;
+  cpu.ram.fill(0);
+  cpu.modifiedAddresses.clear(); 
+  initVideoPattern();
+  cpu.PC = 0x0000;
+  running = false;
+  termEl.focus();
+}
+
+function warmReset() {
+  isPasting = false;
+  if (pasteTimeout) {
+    clearTimeout(pasteTimeout);
+    pasteTimeout = null;
+  }
+  if (activeInjectionTimeout) {
+    clearTimeout(activeInjectionTimeout);
+    activeInjectionTimeout = null;
+  }
+  
+  cpu._kbdBuf = [];
+  videoOutputQueue = [];
+  cpu.PC = 0xFF00;
+  wozmonActive = true;
+  if (screen && screen[0]) {
+    let isBootRow = screen[0].every((ch, i) => (i % 2 === 0 ? ch === '_' : ch === '@'));
+    if (isBootRow) {
+      screen[0] = Array(COLS).fill(' ');
+      renderScreen();
+    }
+  }
+  running = true;
+  termEl.focus();
+}
+
+// File Loaders
+function findMemoryTarget() {
+  if (cpu && cpu.ram instanceof Uint8Array) return cpu.ram;
+  return null;
+}
+
+
+function loadFile(file) {
+  if (!file) {
+    termEl.focus();
+    return;
+  }
+  if (programLoaded && wozmonActive) {
+    console.log("Program already loaded. Resetting system...");
+    hardReset();
+    setTimeout(() => {
+      clearScreen();
+      setTimeout(() => {
+        warmReset();
+        setTimeout(() => {
+          loadFile(file);
+        }, 500);
+      }, 100);
+    }, 100);
+    return;
+  }
+  
+  // Auto-initialize system if not ready
+  if (!wozmonActive) {
+    console.log("System not initialized. Initalizing....");
+    clearScreen();
+    setTimeout(() => {
+      warmReset();
+      setTimeout(() => {
+        loadFile(file);
+      }, 500);
+    }, 100);
+    return;
+  }
+  
+  
+  const fileName = file.name.toLowerCase();
+  const reader = new FileReader();
+  
+if (fileName.endsWith('.hc')) {
+  reader.onload = function(ev) {
+    const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
+    let mem = findMemoryTarget();
+    if (!mem) {
+      alert("No writable memory found!");
+      return;
+    }
+
+    let addr = 0;
+    let addressCount = 0;
+    let startAddress = null;
+    let endAddress = 0;
+    let hasValidAddress = false;
+    let hasError = false;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === "") continue;
+      if (!line.startsWith(":") && /^[0-9A-Fa-f]{4,}$/.test(line)) {
+        addr = parseInt(line.substring(0, 4), 16);
+        
+       
+       if (addr >= mem.length) {
+           if (!hasError) { 
+    hasError = true;
+  setTimeout(() => {
+    alert(`Unable to safely load program! \nLoad address $${addr.toString(16).toUpperCase()} exceeds RAM size!\nMax address: $${(mem.length - 1).toString(16).toUpperCase()}\nCurrent RAM: ${cpu.ramSize}KB`);
+  }, 0);
+}
+  return;
+}
+ if (hasError) {
+      return;
+    }
+        
+        if (startAddress === null) startAddress = addr;
+        addressCount++;
+        hasValidAddress = true;
+        console.log(`Load address: $${addr.toString(16).toUpperCase()}`);
+        continue;
+      }
+      
+      if (line.startsWith(":")) {
+  if (!hasValidAddress) {
+      if (!hasError) {  
+      hasError = true; 
+    setTimeout(() => {
+      alert("Error: Data found before load address!\nFile format should be:\n2000\n: A9 42 ...");
+    }, 0);
+      }
+    return;
+  }
+        
+        const bytes = line.substring(1).trim().split(/\s+/);
+        for (const b of bytes) {
+          if (b === "") continue;
+          
+ 
+         if (addr >= mem.length) {
+             if (!hasError) { 
+    hasError = true;  
+  setTimeout(() => {
+    alert(`Unable to load safely load program! \nAddress $${addr.toString(16).toUpperCase()} exceeds RAM size! \nProgram truncated at $${(addr - 1).toString(16).toUpperCase()}\nYou may need more RAM for this program.`);
+  }, 0);
+}
+  break;
+}
+          
+          const val = parseInt(b, 16);
+          if (isNaN(val)) {
+            console.warn(`Invalid hex byte: ${b} at address $${addr.toString(16).toUpperCase()}`);
+            continue;
+          }
+          
+mem[addr++] = val;
+endAddress = addr - 1;
+        }
+      }
+      if (hasError) {
+        return;
+      }
+    }
+    if (!hasValidAddress || startAddress === null) {
+        if (!hasError) {  
+    hasError = true;  
+  setTimeout(() => {
+    alert("Error: No valid load address found in file!\n\nFile should start with a 4-digit hex address like:\n2000\n: A9 42 8D 00 20");
+  }, 0);
+        }
+  return;
+}
+    
+    console.log(`Loaded HC file with ${addressCount} address block(s)`);
+    console.log(`Written to RAM: $${startAddress.toString(16).toUpperCase()} - $${endAddress.toString(16).toUpperCase()} (${endAddress - startAddress + 1} bytes)`);
+     programLoaded = true;
+    if (localStorage.getItem('hc_hideLoadedMessage') !== 'true') {
+      const startHex = startAddress.toString(16).toUpperCase().padStart(4, '0');
+      const endHex = endAddress.toString(16).toUpperCase().padStart(4, '0');
+      const byteCount = endAddress - startAddress + 1;
+      
+      loadedMessage.textContent = 
+        `Start Address: $${startHex}\n` +
+        `End Address: $${endHex}\n` +
+        `Bytes: ${byteCount}\n` +
+        `RAM Available: ${cpu.ramSize}KB ($0000-$${(mem.length-1).toString(16).toUpperCase()})\n\n` +
+        `To run: Type ${startHex}R and press ENTER`;
+      
+      loadedModal.style.display = 'block';
+    }
+
+    termEl.focus();
+  };
+  reader.readAsText(file);
+    
+  } else if (fileName.endsWith('.bas') || fileName.endsWith('.txt')) {
+    reader.onload = function(ev) {
+      const programText = ev.target.result;
+      termEl.focus();
+      programLoaded = true;
+      function injectCommand(cmd) {
+        for (const ch of cmd) {
+          const code = ch.toUpperCase().charCodeAt(0) & 0x7F;
+          if (typeof enqueueKey === "function") {
+            enqueueKey(code);
+          } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+            cpu._kbdBuf.push(code | 0x80);
+          }
+        }
+        if (typeof enqueueKey === "function") {
+          enqueueKey(0x0D);
+        } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+          cpu._kbdBuf.push(0x8D);
+        }
+      }
+      
+      if (cpu.PC >= 0xE000 && cpu.PC <= 0xEFFF) {
+        console.log("BASIC already running, loading program...");
+        loadProgram();
+      } else {
+        console.log("Starting BASIC...");
+        injectCommand("E000R");
+        activeInjectionTimeout = setTimeout(() => {
+          if (!isPasting) { // Check if not cancelled by reset
+            console.log("BASIC started, loading program...");
+            loadProgram();
+          }
+        }, 1000);
+      }
+      
+      function loadProgram() {
+        const lines = programText.split(/\r?\n/).filter(l => l.trim() !== "");
+        let lineIndex = 0;
+        
+        function typeLine() {
+          if (isPasting === false && pasteTimeout === null && activeInjectionTimeout === null) {
+            console.log("BASIC program injection cancelled by reset");
+            return;
+          }
+          
+          if (lineIndex >= lines.length) {
+            console.log("BASIC program loaded!");
+            activeInjectionTimeout = null;
+            return;
+          }
+          
+          const line = lines[lineIndex].trim();
+          if (line === "") {
+            lineIndex++;
+            activeInjectionTimeout = setTimeout(typeLine, 50);
+            return;
+          }
+          
+          for (const ch of line) {
+            const code = ch.toUpperCase().charCodeAt(0) & 0x7F;
+            if (typeof enqueueKey === "function") {
+              enqueueKey(code);
+            } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+              cpu._kbdBuf.push(code | 0x80);
+            }
+          }
+          
+          if (typeof enqueueKey === "function") {
+            enqueueKey(0x0D);
+          } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+            cpu._kbdBuf.push(0x8D);
+          }
+          
+          lineIndex++;
+          activeInjectionTimeout = setTimeout(typeLine, 200);
+        }
+        
+        typeLine();
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    alert("Unsupported file type. Please use .hc, .bas, or .txt files.");
+    termEl.focus();
+  }
+}
+
+
+function loadFileWithAutoRun(file, customRunAddress) {
+  if (!file) {
+    termEl.focus();
+    return;
+  }
+  
+
+  if (programLoaded && wozmonActive) {
+    console.log("Program already loaded. Resetting system...");
+    hardReset();
+    setTimeout(() => {
+      clearScreen();
+      setTimeout(() => {
+        warmReset();
+        setTimeout(() => {
+          loadFileWithAutoRun(file, customRunAddress);
+        }, 500);
+      }, 100);
+    }, 100);
+    return;
+  }
+  
+  if (!wozmonActive) {
+    console.log("System not initialized. Initializing....");
+    clearScreen();
+    setTimeout(() => {
+      warmReset();
+      setTimeout(() => {
+        loadFileWithAutoRun(file, customRunAddress);
+      }, 500);
+    }, 100);
+    return;
+  }
+  
+  const fileName = file.name.toLowerCase();
+  const reader = new FileReader();
+  
+  if (fileName.endsWith('.hc')) {
+    reader.onload = function(ev) {
+      const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim() !== "");
+      let mem = findMemoryTarget();
+      if (!mem) {
+        alert("No writable memory found!");
+        return;
+      }
+
+      let addr = 0;
+      let addressCount = 0;
+      let startAddress = null;
+      let endAddress = 0;
+      let hasValidAddress = false;
+      let hasError = false;  
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line === "") continue;
+        if (!line.startsWith(":") && /^[0-9A-Fa-f]{4,}$/.test(line)) {
+          addr = parseInt(line.substring(0, 4), 16);
+          
+          if (addr >= mem.length) {
+            if (!hasError) {  
+              hasError = true;  
+              setTimeout(() => {
+                alert(`Unable to safely load program! \nLoad address $${addr.toString(16).toUpperCase()} exceeds RAM size!\nMax address: $${(mem.length - 1).toString(16).toUpperCase()}\nCurrent RAM: ${cpu.ramSize}KB`);
+              }, 0);
+            }  
+            return;
+          }
+          if (startAddress === null) startAddress = addr;
+          addressCount++;
+          hasValidAddress = true;
+          console.log(`Load address: $${addr.toString(16).toUpperCase()}`);
+          continue;
+        }
+        
+        if (line.startsWith(":")) {
+          if (!hasValidAddress) {
+            if (!hasError) {  
+              hasError = true;  
+              setTimeout(() => {
+                alert("Error: Data found before load address!\nFile format should be:\n2000\n: A9 42 ...");
+              }, 0);
+            }  
+            return;
+          }
+          
+          const bytes = line.substring(1).trim().split(/\s+/);
+          for (const b of bytes) {
+            if (b === "") continue;
+            
+            if (addr >= mem.length) {
+              if (!hasError) {  
+                hasError = true; 
+                setTimeout(() => {
+                  alert(`Unable to load safely load program! \nAddress $${addr.toString(16).toUpperCase()} exceeds RAM!\nProgram truncated at $${(addr - 1).toString(16).toUpperCase()}\nYou may need more RAM for this program.`);
+                }, 0);
+              }  
+              break;
+            }
+            
+            const val = parseInt(b, 16);
+            if (isNaN(val)) {
+              console.warn(`Invalid hex byte: ${b} at address $${addr.toString(16).toUpperCase()}`);
+              continue;
+            }
+            
+mem[addr++] = val;
+endAddress = addr - 1;
+          }
+        }
+      }
+      if (hasError) {
+        return;
+      }
+      if (!hasValidAddress || startAddress === null) {
+        if (!hasError) {  
+          hasError = true;  
+          setTimeout(() => {
+            alert("Error: No valid load address found in file!\n\nFile should start with a 4-digit hex address like:\n2000\n: A9 42 8D 00 20");
+          }, 0);
+        }  
+        return;
+      }
+      console.log(`Loaded HC file with ${addressCount} address block(s)`);
+      console.log(`Written to RAM: $${startAddress.toString(16).toUpperCase()} - $${endAddress.toString(16).toUpperCase()} (${endAddress - startAddress + 1} bytes)`);
+      programLoaded = true;
+      const runCommand = customRunAddress || startAddress.toString(16).toUpperCase();
+      console.log(`Auto-running with command: ${runCommand}${customRunAddress ? '' : 'R'}`);
+      
+      activeInjectionTimeout = setTimeout(() => {
+        for (const ch of runCommand) {
+          const code = ch.charCodeAt(0) & 0x7F;
+          if (typeof enqueueKey === "function") {
+            enqueueKey(code);
+          } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+            cpu._kbdBuf.push(code | 0x80);
+          }
+        }
+
+        if (!customRunAddress || /^[0-9A-F]+$/i.test(customRunAddress)) {
+          if (typeof enqueueKey === "function") {
+            enqueueKey(0x52); 
+          } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+            cpu._kbdBuf.push(0x52 | 0x80);
+          }
+        }
+
+        if (typeof enqueueKey === "function") {
+          enqueueKey(0x0D);
+        } else if (cpu && Array.isArray(cpu._kbdBuf)) {
+          cpu._kbdBuf.push(0x8D);
+        }
+        activeInjectionTimeout = null;
+      }, 300);
+
+      termEl.focus();
+    };
+    reader.readAsText(file);
+  }
+}
+
+// File input handler
+document.getElementById('programLoader').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  loadFile(file);
+  e.target.value = '';
+});
+
+
+termEl.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  termEl.style.opacity = '0.5';
+  termEl.style.border = '2px dashed var(--term-fg)';
+});
+
+termEl.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  termEl.style.opacity = '1';
+  termEl.style.border = '1px solid #333';
+});
+
+termEl.addEventListener('drop', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  termEl.style.opacity = '1';
+  termEl.style.border = '1px solid #333';
+  
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const file = files[0];
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.hc')) {
+      loadFileWithAutoRun(file);
+    } else {
+      loadFile(file);
+    }
+  }
+  
+  termEl.focus();
+});
+
+// Modals
+const libraryModal = document.getElementById('libraryModal');
+const libraryBtn = document.getElementById('btnLibrary');
+const closeLibrary = document.getElementById('closeLibrary');
+const programList = document.getElementById('programList');
+
+
+const loadedModal = document.getElementById('loadedModal');
+const closeLoaded = document.getElementById('closeLoaded');
+const loadedMessage = document.getElementById('loadedMessage');
+const dontShowAgain = document.getElementById('dontShowAgain');
+
+
+const saveModal = document.getElementById('saveModal');
+const saveBtn = document.getElementById('btnSaveRAM');
+const closeSave = document.getElementById('closeSave');
+const confirmSave = document.getElementById('confirmSave');
+const cancelSave = document.getElementById('cancelSave');
+
+// Program catalog for the library
+const programCatalog = [
+  {
+    name: "15 Puzzle",
+    description: "Program originally by Jeff Jetton.",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/15-puzzle(2).hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "2048",
+    description: "Program originally by Denis Paryshev.",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/2048.hc",
+    runAddress: "280",
+    instructions: "Click to run."
+  },
+  {
+    name: "23 Matches",
+    description: "Program originally by Creative Computing, modified by Philip Lord.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/23matches.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "99 Bottles of Beer",
+    description: "Counts from 1 to 100",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/beer.hc",
+    runAddress: "BEE",
+    instructions: "Click to run."
+  },
+  {
+    name: "APPLE-1 Test Program",
+    description: "Program originally by Steve Wozniak",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/test-program.hc",
+    runAddress: "0",
+    instructions: "Click to run."
+  },
+  {
+    name: "Apple 30th Anniversary",
+    description: "Program originally by Dave Schmenk.",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/30th.hc",
+    runAddress: "280",
+    instructions: "Click to run."
+  },
+  {
+    name: "Apple 40th Anniversary",
+    description: "Program originally by Dave Schmenk.",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/apple40th.hc",
+    runAddress: "280",
+    instructions: "<strong> SWITCH TO 8KB OR HIGHER RAM.</strong> <br> Click to run."
+  },
+  {
+    name: "AppleSoft BASIC Lite",
+    description: "Program originally by Tom Greene.",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/AppleSoft-Lite.hc",
+    runAddress: "6000",
+    instructions: "<strong>SWITCH TO 32KB OR HIGHER RAM.</strong> <br> Click to run."
+  },
+  {
+    name: "Bat-Num",
+    description: "Program originally by Philip Lord.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/Batnum.bas",
+    instructions: "Click to run."
+  },
+  {
+    name: "BlackJack+",
+    description: "Program originally by Landon Smith",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/blackjack+.bas",
+    instructions: "Click to run."
+  },
+  {
+    name: "Cellular Automation",
+    description: "Program originally by Ken Wesson",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/cellular.hc",
+    runAddress: "300",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Checkers",
+    description: "Program originally by Vince Briel",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/checkers.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "CodeBreaker",
+    description: "Program originally by Uncle Bernie",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/codebreaker.hc",
+    runAddress: "800",
+    instructions: "Click to run."
+  },
+  {
+    name: "Conway's Game of Life",
+    description: "Author Unknown",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/life.hc",
+    runAddress: "2000",
+    instructions: "<strong>SWITCH TO 16KB OR HIGHER RAM.</strong> Click to run."
+  },
+  {
+    name: "Deal or No Deal",
+    description: "Program originally by Vince Briel",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/deal.txt",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Dis-Assembler",
+    description: "Program originally by Steve Wozniak, Allen Baum",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/dis-assembler.hc",
+    runAddress: "800",
+    instructions: "Click to run. <br> Program may need to be SOFT-RESET for configuration."
+  },
+  {
+    name: "Hammurabi",
+    description: "Program originally by David H. Ahl",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/hamurabi.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Hangman",
+    description: "Program originally by Creative Computing, ported to Replica/1 by Carl Claunch.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/hangman.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Hellorld!",
+    description: "Program originally by Bobby Nijssen",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/hellorld.hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "High Or Low",
+    description: "Program originally by Landon Smith",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/highorlow.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "HoneyCrisp Graphics Demo",
+    description: "Program originally by Landon Smith",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/graphicdemo.hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Little Tower",
+    description: "Author Unknown",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/littletower.hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Lunar Lander",
+    description: "Program originally by Mark Garetz.",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/lunar-lander.hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Lunar Lander (ASCII Graphics)",
+    description: "Program originally by Creative Computing, adapted to Apple-I by Corey Cohen.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/lunar-lander-ascii.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Magic Squares",
+    description: "Program originally by Bamse.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/Magic Squares.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Mandelbrot65",
+    description: "Program originally by Fred Stark",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/mandelbrot65.hc",
+    runAddress: "280",
+    instructions: "<strong>SWITCH TO 8KB OR HIGHER RAM.</strong> <br> Click to run."
+  },
+  {
+    name: "MasterMind",
+    description: "Program originally by Steve Wozniak",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/mastermind(3).hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Matrix",
+    description: "Author Unknown",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/matrix.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "MicroChess",
+    description: "Program originally by Peter R. Jennings/Larry Nelson",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/microchess(4).hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "NICOMA",
+    description: "Program originally by Philip Lord.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/NICOMA.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Pasart",
+    description: "Program originally by Ken Wesson",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/pasart(3).hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Peg Solitare",
+    description: "Program originally by Jeff Jetton",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/pegsoli.hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Resistor Calculator",
+    description: "Program originally by Paolo Di Leo",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/resistor-calculator.bas.txt",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "REVERSE",
+    description: "Author Unknown",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/reverse.txt",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Shut-The-Box!",
+    description: "Program originally by Jeff Jetton",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/shut-the-box(1).hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Slots",
+    description: "Program originally by Fred Mirabelle/Bob Harper",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/slots.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Star-Trek (1976)",
+    description: "Program originally by Steve Wozniak",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/startrek.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Stringout (M. Meier Version)",
+    description: "Program originally by Chris Espinosa",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/str-out.hc",
+    runAddress: "400",
+    instructions: "Click to run. <br> Program may need to be SOFT-RESET for configuration."
+  },
+  {
+    name: "Sudoku",
+    description: "Program originally by Larry Nelson.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/sudoku.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "System Memory Test (v0009-027F)",
+    description: "Program originally by Mike Willegal",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/memorytest_v0009-027F.hc",
+    runAddress: "280",
+    instructions: "Click to run."
+  },
+  {
+    name: "System Memory Test (v03A2-0FFF)",
+    description: "Program originally by Mike Willegal",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/memorytest_v03A2-0FFF.hc",
+    runAddress: "280",
+    instructions: "Click to run."
+  },
+  {
+    name: "TypeWriter",
+    description: "Program originally by Landon Smith",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/typewriter.hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Volksforth",
+    description: "Author Unknown",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/Volksforth.hc",
+    runAddress: "1000",
+    instructions: "<strong> SWITCH TO 8KB OR HIGHER RAM.</strong> Click to run."
+  },
+  {
+    name: "War!",
+    description: "Program originally by Landon Smith",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/war.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  },
+  {
+    name: "Worple!",
+    description: "Program originally by Jeff Jetton",
+    type: "Machine Code",
+    url: "https://landonjsmith.com/hcprogs/worple(1).hc",
+    runAddress: "300",
+    instructions: "Click to run."
+  },
+  {
+    name: "Yahtzee",
+    description: "Program originally by Larry Nelson.",
+    type: "BASIC",
+    url: "https://landonjsmith.com/hcprogs/yahtzee.bas",
+    instructions: "Click to run auto-write the code in. <br> Type RUN after loading to start."
+  }
+];
+
+libraryBtn.addEventListener('click', () => {
+  libraryModal.style.display = 'block';
+  loadProgramLibrary();
+});
+
+
+closeLibrary.addEventListener('click', () => {
+  libraryModal.style.display = 'none';
+});
+
+
+closeLoaded.addEventListener('click', () => {
+  if (dontShowAgain.checked) {
+    localStorage.setItem('hc_hideLoadedMessage', 'true');
+  }
+  loadedModal.style.display = 'none';
+});
+
+
+window.addEventListener('click', (e) => {
+  if (e.target === libraryModal) {
+    libraryModal.style.display = 'none';
+  }
+  if (e.target === loadedModal) {
+    if (dontShowAgain.checked) {
+      localStorage.setItem('hc_hideLoadedMessage', 'true');
+    }
+    loadedModal.style.display = 'none';
+  }
+});
+
+saveBtn.addEventListener('click', () => {
+  saveModal.style.display = 'block';
+  
+
+  const ramSizeDisplay = document.getElementById('ramSizeDisplay');
+  if (ramSizeDisplay) {
+    ramSizeDisplay.textContent = `${cpu.ramSize}KB ($0000-$${(cpu.ram.length - 1).toString(16).toUpperCase()})`;
+  }
+  
+
+  const ramSize = cpu.ram.length;
+  document.getElementById('endAddr').value = (ramSize - 1).toString(16).toUpperCase().padStart(4, '0');
+});
+
+// Close save modal
+closeSave.addEventListener('click', () => {
+  saveModal.style.display = 'none';
+});
+
+cancelSave.addEventListener('click', () => {
+  saveModal.style.display = 'none';
+});
+
+// Update the window click listener to include saveModal
+window.addEventListener('click', (e) => {
+  if (e.target === libraryModal) {
+    libraryModal.style.display = 'none';
+  }
+  if (e.target === loadedModal) {
+    if (dontShowAgain.checked) {
+      localStorage.setItem('hc_hideLoadedMessage', 'true');
+    }
+    loadedModal.style.display = 'none';
+  }
+  if (e.target === saveModal) {
+    saveModal.style.display = 'none';
+  }
+});
+
+// Handle custom range toggle
+document.querySelectorAll('input[name="saveRange"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    const customInputs = document.getElementById('customRangeInputs');
+    customInputs.style.display = e.target.value === 'custom' ? 'block' : 'none';
+  });
+});
+
+// Format hex input fields
+['startAddr', 'endAddr'].forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '');
+  });
+});
+
+// Confirm save action
+confirmSave.addEventListener('click', () => {
+  saveRAMToFile();
+});
+
+// Load and display program library
+function loadProgramLibrary() {
+  programList.innerHTML = '';
+  
+  if (programCatalog.length === 0) {
+    programList.innerHTML = '<div class="error-message">No programs available</div>';
+    return;
+  }
+  
+  displayPrograms(programCatalog);
+  updateSearchStats(programCatalog.length, programCatalog.length);
+  
+  // Setup search listener after modal is opened
+  const searchInput = document.getElementById('programSearch');
+  searchInput.value = ''; // Clear previous search
+  searchInput.removeEventListener('input', handleSearch); 
+  searchInput.addEventListener('input', handleSearch); 
+}
+
+function handleSearch(e) {
+  const searchTerm = e.target.value.toLowerCase().trim();
+  
+  if (searchTerm === '') {
+    displayPrograms(programCatalog);
+    updateSearchStats(programCatalog.length, programCatalog.length);
+    return;
+  }
+  
+  const filteredPrograms = programCatalog.filter(program => {
+    return program.name.toLowerCase().includes(searchTerm) ||
+           program.description.toLowerCase().includes(searchTerm) ||
+           program.type.toLowerCase().includes(searchTerm);
+  });
+  
+  displayPrograms(filteredPrograms);
+  updateSearchStats(filteredPrograms.length, programCatalog.length);
+}
+
+function displayPrograms(programs) {
+  programList.innerHTML = '';
+  
+  if (programs.length === 0) {
+    programList.innerHTML = '<div class="error-message">No programs match your search</div>';
+    return;
+  }
+  
+  programs.forEach((program, index) => {
+    const programItem = document.createElement('div');
+    programItem.className = 'program-item';
+    programItem.innerHTML = `
+      <h3><span class="program-type">${program.type}</span>${program.name}</h3>
+      <p>${program.description}</p>
+      <p><em>${program.instructions}</em></p>
+    `;
+    
+    programItem.addEventListener('click', () => {
+      loadProgramFromLibrary(program);
+    });
+    
+    programList.appendChild(programItem);
+  });
+}
+
+function updateSearchStats(shown, total) {
+  const searchStats = document.getElementById('searchStats');
+  if (shown === total) {
+    searchStats.textContent = `Showing all ${total} programs`;
+  } else {
+    searchStats.textContent = `Showing ${shown} of ${total} programs`;
+  }
+}
+
+async function loadProgramFromLibrary(program) {
+  try {
+    programList.innerHTML = '<div class="loading-message">Loading program...</div>';
+    
+    const response = await fetch(program.url);
+    if (!response.ok) throw new Error('Failed to load program');
+    
+    const blob = await response.blob();
+    const file = new File([blob], `${program.name}.${program.type.toLowerCase() === 'basic' ? 'bas' : 'hc'}`, {
+      type: 'text/plain'
+    });
+    
+    libraryModal.style.display = 'none';
+    
+    // If Machine Code with runAddress, use auto-run
+    if (program.type === 'Machine Code') {
+      loadFileWithAutoRun(file, program.runAddress);  
+    } else {
+      loadFile(file);
+    }
+    
+  } catch (error) {
+    programList.innerHTML = `<div class="error-message">Error loading program: ${error.message}</div>`;
+    console.error('Error loading program:', error);
+  }
+}
+
+document.getElementById('shortcutsToggle').addEventListener('click', function() {
+  const content = document.getElementById('shortcutsContent');
+  const toggle = this;
+  
+  if (content.classList.contains('show')) {
+    content.classList.remove('show');
+    toggle.textContent = '▶ Show Shortcuts';
+  } else {
+    content.classList.add('show');
+    toggle.textContent = '▼ Hide Shortcuts';
+  }
+});
+document.querySelectorAll('input[name="memsize"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    localStorage.setItem('hc_memsize', e.target.value);
+    location.reload();
+  });
+});
+document.querySelectorAll('button, input[type="radio"], select').forEach(element => {
+  element.addEventListener('change', () => {
+    if (wozmonActive) {
+      setTimeout(() => termEl.focus(), 50);
+    }
+  });
+  element.addEventListener('click', (e) => {
+    // Don't refocus if clicking the theme select or other dropdowns
+    if (element.tagName === 'SELECT') return;
+    if (wozmonActive) {
+      setTimeout(() => termEl.focus(), 50);
+    }
+  });
+});
+document.querySelectorAll('button').forEach(button => {
+  button.addEventListener('mousedown', (e) => {
+    e.preventDefault(); 
+  });
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  hardReset();
+});
+
+document.getElementById('btnWarmReset').addEventListener('click', () => {
+  warmReset();
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  clearScreen();
+});
+
+document.getElementById('btnBreak').addEventListener('click', () => {
+  cpu.triggerBreak();
+});
+document.getElementById('btnFullscreen').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    termEl.requestFullscreen().catch(err => {
+      console.error('Fullscreen request failed:', err);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+  setTimeout(() => termEl.focus(), 100);
+});
+document.addEventListener('fullscreenchange', () => {
+  setTimeout(() => termEl.focus(), 100);
+});
+document.fonts.ready.then(() => {
+  console.log('Fonts loaded');
+  (function boot(){
+    termEl.focus();
+    loadWozmonROM(b64ToBytes(WOZMON_BASE64));
+    loadIntegerBasicROM(INTBASIC_BASE64);
+    hardReset();
+    requestAnimationFrame(tick);
+  })();
+});
+(function boot(){
+  termEl.focus();
+  loadWozmonROM(b64ToBytes(WOZMON_BASE64));
+  loadIntegerBasicROM(INTBASIC_BASE64);
+  hardReset();
+  requestAnimationFrame(tick);
+})();
+
+function saveRAMToFile() {
+  const saveRange = document.querySelector('input[name="saveRange"]:checked').value;
+  const skipZeros = document.getElementById('skipZeros').checked;
+  const filename = document.getElementById('saveFilename').value.trim() || 'program';
+  
+  let addressesToSave = [];
+  
+  if (saveRange === 'modified') {
+    // Only save addresses that were modified
+    addressesToSave = Array.from(cpu.modifiedAddresses).sort((a, b) => a - b);
+    
+    if (addressesToSave.length === 0) {
+      alert('No modified RAM to save');
+      return;
+    }
+  } else if (saveRange === 'full') {
+    // Save entire RAM range
+    for (let addr = 0; addr < cpu.ram.length; addr++) {
+      if (!skipZeros || cpu.ram[addr] !== 0) {
+        addressesToSave.push(addr);
+      }
+    }
+  } else {
+    // Custom range
+    const startHex = document.getElementById('startAddr').value;
+    const endHex = document.getElementById('endAddr').value;
+    
+    if (!startHex || !endHex) {
+      alert('Please enter valid start and end addresses');
+      return;
+    }
+    
+    let startAddr = parseInt(startHex, 16);
+    let endAddr = parseInt(endHex, 16);
+    
+    if (isNaN(startAddr) || isNaN(endAddr)) {
+      alert('Invalid hex addresses');
+      return;
+    }
+    
+    if (startAddr > endAddr) {
+      alert('Start address must be less than or equal to end address');
+      return;
+    }
+    
+    const maxAddr = (cpu.ram.length - 1).toString(16).toUpperCase().padStart(4, '0');
+    if (endAddr >= cpu.ram.length) {
+      alert(`End address exceeds RAM size (max: $${maxAddr})`);
+      return;
+    }
+    
+    for (let addr = startAddr; addr <= endAddr; addr++) {
+      if (!skipZeros || cpu.ram[addr] !== 0) {
+        addressesToSave.push(addr);
+      }
+    }
+  }
+  
+  if (addressesToSave.length === 0) {
+    alert('No data to save (memory is empty or all zeros)');
+    return;
+  }
+  
+  // Build .hc file content from addressesToSave
+  let content = '';
+  let currentBlockStart = null;
+  let currentBlock = [];
+  let lastAddr = -2;
+  
+  for (let i = 0; i < addressesToSave.length; i++) {
+    const addr = addressesToSave[i];
+    const byte = cpu.ram[addr];
+    
+    // Start new block if addresses aren't contiguous
+    if (addr !== lastAddr + 1) {
+      // Write previous block
+      if (currentBlock.length > 0) {
+        content += currentBlockStart.toString(16).toUpperCase().padStart(4, '0') + '\n';
+        content += ':';
+        for (let j = 0; j < currentBlock.length; j++) {
+          content += ' ' + currentBlock[j].toString(16).toUpperCase().padStart(2, '0');
+          if ((j + 1) % 8 === 0 && j < currentBlock.length - 1) {
+            content += '\n:';
+          }
+        }
+        content += '\n';
+      }
+      
+      // Start new block
+      currentBlockStart = addr;
+      currentBlock = [];
+    }
+    
+    currentBlock.push(byte);
+    lastAddr = addr;
+    
+    // Write blocks in 64 byte chunks for readability
+    if (currentBlock.length >= 64) {
+      content += currentBlockStart.toString(16).toUpperCase().padStart(4, '0') + '\n';
+      content += ':';
+      for (let j = 0; j < currentBlock.length; j++) {
+        content += ' ' + currentBlock[j].toString(16).toUpperCase().padStart(2, '0');
+        if ((j + 1) % 8 === 0 && j < currentBlock.length - 1) {
+          content += '\n:';
+        }
+      }
+      content += '\n';
+      currentBlock = [];
+      currentBlockStart = null;
+      lastAddr = -2;
+    }
+  }
+  
+  // Write final block
+  if (currentBlock.length > 0) {
+    content += currentBlockStart.toString(16).toUpperCase().padStart(4, '0') + '\n';
+    content += ':';
+    for (let j = 0; j < currentBlock.length; j++) {
+      content += ' ' + currentBlock[j].toString(16).toUpperCase().padStart(2, '0');
+      if ((j + 1) % 8 === 0 && j < currentBlock.length - 1) {
+        content += '\n:';
+      }
+    }
+    content += '\n';
+  }
+  
+  // Create and download file
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename + '.hc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  saveModal.style.display = 'none';
+  
+  const startAddr = addressesToSave[0];
+  const endAddr = addressesToSave[addressesToSave.length - 1];
+  console.log(`Saved ${addressesToSave.length} modified bytes from $${startAddr.toString(16).toUpperCase()} to $${endAddr.toString(16).toUpperCase()}`);
+}
+</script>
+</body>
+</html>
