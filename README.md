@@ -10,16 +10,12 @@ This entire project was developed out of a simple curiosity:
 
 I also had the idea of attempting to keep the entire emulator fully-featured and contained within one file, yet under 1 megabyte...I accomplished this with v1.0, and all subsequent versions following 1.0 will retain this goal.
 
-HoneyCrisp v1.0 was released on my personal website at [landonjsmith.com](https://landonjsmith.com) on **September 30th, 2025**, is included in the **RELEASES** section of this repository.
-
-*VERSION 1.1 of The HoneyCrisp Emulator is now available. Check the releases page!*
-Feel free to poke around in the source code! 🙂
-
-*VERSION 1.2 of The HoneyCrisp Emulator is now available. Check the releases page!*
-Feel free to poke around in the source code! 🙂
 
 *VERSION 1.2.1 of The HoneyCrisp Emulator is now available. This version is a HOTFIX release for v1.2.*
 
-VERSION 1.2.2 of The HoneyCrisp Emulator is now available. This version is a BUG FIX release for v1.2.
+*VERSION 1.2.2 of The HoneyCrisp Emulator is now available. This version is a BUG FIX release for v1.2.*
 
-**VERSION 1.2.4 of The HoneyCrisp Emulator is now available. This version improves upon v1.2 in minor ways, including bug fixes and QOL updates.** If you're downloading a source-code release, I highly recommend you download this version for the latest stability and features.
+*VERSION 1.2.4 of The HoneyCrisp Emulator is now available. This version improves upon v1.2 in minor ways, including bug fixes and QOL updates.*
+
+**VERSION 1.2.5 of The HoneyCrisp Emulator is now available.** This is another QOL update that improves the performance and UX in multiple ways.*
+If you're downloading a source-code release, I highly recommend you download this version for the latest improvements.
