@@ -12,11 +12,4 @@ I also had the idea of attempting to keep the entire emulator fully-featured and
 
 **HoneyCrisp uses an APPLE-1 specific adaptation of my custom 6502 CPU emulation core, MOSe: https://github.com/landonjsmith/MOSe**
 
-*VERSION 1.2.1 of The HoneyCrisp Emulator is now available. This version is a HOTFIX release for v1.2.*
-
-*VERSION 1.2.2 of The HoneyCrisp Emulator is now available. This version is a BUG FIX release for v1.2.*
-
-*VERSION 1.2.4 of The HoneyCrisp Emulator is now available. This version improves upon v1.2 in minor ways, including bug fixes and QOL updates.*
-
-**VERSION 1.2.5 of The HoneyCrisp Emulator is now available.** This is another QOL update that improves the performance and UX in multiple ways.
-**If you're downloading a source-code release, I highly recommend you download this version for the latest improvements.**
+**For the latest release information, please check the releases tab.**
