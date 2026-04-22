@@ -1,0 +1,78 @@
+:root {
+  --term-fg: #ffffff;
+  --term-bg: #000000;
+}
+
+@supports (-moz-appearance: none) {
+  body {
+    zoom: 0.8;
+  }
+}
+
+@font-face {
+  font-family: "AppleI";
+  src: url("../../../fonts/hc.ttf") format("truetype");
+  font-display: swap;
+}
+
+#terminal {
+  box-sizing: content-box;
+  font-family: "AppleI", monospace;
+  font-size: 16px;
+  line-height: 1em;
+  white-space: pre;
+  letter-spacing: 0;
+  word-spacing: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--term-fg);
+  background-color: var(--term-bg);
+  width: calc(40ch);
+  height: calc(24em);
+  padding: 20px;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+  position: relative;
+  transform: scale(0.9);
+  transform-origin: center;
+  transition:
+    color 0.8s ease,
+    background-color 0.8s ease,
+    box-shadow 0.8s ease;
+}
+
+#terminal.scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+#terminal:fullscreen {
+  width: 90vw;
+  height: 90vh;
+  font-size: 2.5vmin;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+}
+
+#terminal:focus {
+  outline: none;
+}
+
+#indicator.running {
+  background: var(--term-fg);
+  box-shadow: 0 0 8px var(--term-fg);
+  opacity: 1;
+}

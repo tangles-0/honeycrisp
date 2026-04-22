@@ -9,6 +9,20 @@ This entire project was developed out of a simple curiosity:
 
 I also had the idea of attempting to keep the entire emulator fully-featured and contained within one file, yet under 1 megabyte...I accomplished this with v1.0, and all subsequent versions following 1.0 will retain this goal.
 
-**HoneyCrisp uses an APPLE-1 specific adaptation of my custom 6502 CPU emulation core, MOSe: https://github.com/landonjsmith/MOSe**
+**HoneyCrisp uses an APPLE-1 specific adaptation of my custom 6502 CPU emulation core, MOSe: [https://github.com/landonjsmith/MOSe](https://github.com/landonjsmith/MOSe)**
 
 **For the latest release information, please check the releases tab.**
+
+# Development
+
+- install [node.js](https://nodejs.org/en)
+- run `npm i` inside the project folder to install the dependencies
+- run `npm run dev` and point your browser to the URL it supplies to see the page
+- run `npm run build` to generate html, css, and js files for hosting
+
+Key files:
+
+- /src/app/lib/emulator/...
+- /src/app/components/Emulator.tsx
+- /src/app/components/...
+
